@@ -66,6 +66,11 @@ install:
   - $(phpenv which php) -m
 
 before_script:
+  # Setup MsSql
+  - sudo docker run --name=mssql-server-linux-latest -e 'ACCEPT_EULA=Y' -e 'MSSQL_SA_PASSWORD=YourStrong!Passw0rd' -p 1433:1433 -d mcr.microsoft.com/mssql/server:2019-CTP3.0-ubuntu
+  - sudo docker cp sqlserver.sql mssql-server-linux-latest:sqlserver.sql
+  - sudo docker exec -it mssql-server-linux-latest /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourStrong!Passw0rd' -i sqlserver.sql
+
   # Create database and user
   - echo 'CREATE DATABASE incubator CHARSET=utf8 COLLATE=utf8_unicode_ci' | mysql -u root
   - echo "CREATE USER 'incubator'@'%' IDENTIFIED BY 'secret'" | mysql -u root
@@ -80,6 +85,7 @@ script:
 
 after_failure:
     - for file in `ls ./tests/_output`; do [ -f ./tests/_output/$file ] && cat ./tests/_output/$file; done;
+
 
 notifications:
   email:
